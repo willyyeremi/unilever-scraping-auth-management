@@ -1,0 +1,55 @@
+name: unilever-scraping
+
+services:
+  freeipa:
+    image: freeipa/freeipa-server:almalinux-9
+    container_name: unilever-scraping-freeipa
+    hostname: ipa.example.local
+    ports:
+      - "636:636"      # LDAPS
+      - "88:88"        # Kerberos TCP
+      - "88:88/udp"    # Kerberos UDP
+      - "464:464"      # kadmin TCP
+      - "464:464/udp"  # kadmin UDP
+      - "8443:8443"    # Web UI (HTTPS)
+    environment:
+      - IPA_SERVER_HOSTNAME=${IPA_SERVER_HOSTNAME}
+      - IPA_DOMAIN=${IPA_DOMAIN}
+      - IPA_REALM=${IPA_REALM}
+      - IPA_PASSWORD=${IPA_PASSWORD}
+    volumes:
+      - ./data/freeipa:/data
+    command: >
+      -U --unattended --realm ${IPA_REALM}
+      --ds-password=${IPA_DS_PASSWORD} --admin-password=${IPA_ADMIN_PASSWORD}
+    sysctls:
+      net.ipv6.conf.all.disable_ipv6: 0   
+    networks:
+      - shared-network
+
+  keycloak:
+    build: ./keycloak
+    container_name: unilever-scraping-keycloak
+    hostname: keycloak.example.local
+    ports:
+      - "9443:8443"   # Web UI
+    environment:
+      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN}
+      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
+      - KC_HTTP_PORT=8080
+      - KC_HTTPS_PORT=8443
+      - KC_PROXY=edge
+      - KC_HOSTNAME_STRICT=false
+    volumes:
+      - ./etc/keycloak/krb5.conf:/etc/krb5.conf:ro
+      - ./etc/keycloak/http.keytab:/etc/keycloak/http.keytab:ro
+      - ./data/keycloak:/opt/keycloak/data
+    command: >
+      start-dev
+    networks:
+      - shared-network
+
+networks:
+  shared-network:
+    name: unilever-scraping-network
+    external: true

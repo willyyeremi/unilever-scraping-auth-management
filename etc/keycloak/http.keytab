@@ -1,0 +1,3 @@
+# Di container FreeIPA
+kadmin.local -q "addprinc -randkey HTTP/keycloak.example.local@EXAMPLE.LOCAL"
+kadmin.local -q "ktadd -k /tmp/http.keytab HTTP/keycloak.example.local@EXAMPLE.LOCAL"

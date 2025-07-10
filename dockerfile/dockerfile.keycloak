@@ -1,0 +1,10 @@
+FROM quay.io/keycloak/keycloak:24.0
+
+USER root
+
+# Copy keytab and krb5.conf already done via volume mount
+# Optional: Install Kerberos client (for debugging or krb5 utils)
+RUN microdnf install -y krb5-workstation && \
+    microdnf clean all
+
+USER 1000
